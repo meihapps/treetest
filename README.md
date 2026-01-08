@@ -2,6 +2,9 @@
 
 one cli for all your test frameworks
 
+
+This is useful if a single repo uses multiple test frameworks (e.g. a multi-language project), or if you switch between projects with different stacks and want one consistent command to run tests everywhere.
+
 `treetest` lets you run or list tests across multiple frameworks from a single command, automatically filtering out frameworks that aren’t installed.
 
 it’s configurable via a simple json file.
