@@ -1,5 +1,5 @@
-use clap::{Parser, Subcommand};
-use serde::Deserialize;
+use clap::{CommandFactory, Parser, Subcommand};
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::process::Command;
 use std::{env, fs};
@@ -14,6 +14,7 @@ const DEFAULT_JSON_URL: &str =
     about = "treetest: one cli for all the test frameworks",
     override_usage = "\n\ttreetest\n\ttreetest <command>",
     long_about = None,
+    disable_help_subcommand = true,
 )]
 struct Cli {
     #[command(subcommand)]
@@ -26,9 +27,13 @@ enum Commands {
     Run,
     /// list all tests in all available frameworks without executing them
     List,
+    /// updates `frameworks.config`, adding new frameworks without removing those already present.
+    Update,
+    /// print this message or the help of the given subcommand(s)
+    Help,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct Framework {
     name: String,
     list_cmd: String,
@@ -115,6 +120,42 @@ fn run_all_tests(framework: &Framework) {
     println!("Exit status: {}", status);
 }
 
+fn load_frameworks(config_path: &PathBuf) -> Vec<Framework> {
+    let json = fs::read_to_string(config_path).expect("Failed to read frameworks.json");
+    serde_json::from_str(&json).expect("Invalid JSON format")
+}
+
+fn update_frameworks(config_path: &PathBuf) {
+    println!("Checking for updates to frameworks...");
+
+    let remote_json = reqwest::blocking::get(DEFAULT_JSON_URL)
+        .expect("Failed to download default config")
+        .text()
+        .expect("Failed to read response text");
+
+    let remote_frameworks: Vec<Framework> =
+        serde_json::from_str(&remote_json).expect("Invalid remote JSON format");
+
+    let mut user_frameworks = load_frameworks(config_path);
+
+    let mut added = 0;
+    for framework in remote_frameworks {
+        if !user_frameworks.iter().any(|u| u.name == framework.name) {
+            user_frameworks.push(framework);
+            added += 1;
+        }
+    }
+
+    if added > 0 {
+        let updated_json =
+            serde_json::to_string_pretty(&user_frameworks).expect("Failed to serialize frameworks");
+        fs::write(config_path, updated_json).expect("Failed to update frameworks.json");
+        println!("Added {} new frameworks.", added);
+    } else {
+        println!("No new frameworks to add.");
+    }
+}
+
 fn main() {
     let cli = Cli::parse();
     let config_path = ensure_config();
@@ -134,6 +175,12 @@ fn main() {
             for framework in &available_frameworks {
                 run_all_tests(framework);
             }
+        }
+        Commands::Update => {
+            update_frameworks(&config_path);
+        }
+        Commands::Help => {
+            Cli::command().print_help().unwrap();
         }
     };
 }
