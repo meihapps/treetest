@@ -14,16 +14,23 @@ it’s configurable via a simple json file.
 
 ```fish
 treetest
+# or
+treetest run
 ```
 
 - list all tests without executing them:
 
-\```bash
+```fish
 treetest list
-treetest -l
-\```
+```
 
-- supports multiple frameworks via a json config (`frameworks.json`)
+- update frameworks index:
+
+```fish
+treetest update
+```
+
+- supports multiple frameworks via a json config
 - automatically filters out missing frameworks
 - easy to add custom frameworks without modifying rust code
 
@@ -33,25 +40,37 @@ treetest -l
 
 install via cargo:
 
-\```bash
+```fish
 cargo install treetest
-\```
+```
 
 Or build from source:
 
-\```bash
-git clone https://github.com/YOUR_USERNAME/treetest.git
+```fish
+git clone https://github.com/meihapps/treetest.git
 cd treetest
 cargo build --release
-\```
+```
 
 ---
 
 ## configuration
 
-create a `frameworks.json` in your project directory:
+the config file is located at:
 
-\```json
+linux/macos: ~/.config/treetest/frameworks.json (or `$XDG_CONFIG_HOME/treetest/frameworks.json` if `XDG_CONFIG_HOME` is set)
+
+windows: %appdata%\treetest\frameworks.json
+
+each framework is defined as a json object with the following fields:
+
+- `name` (string): a unique name for the test framework.
+- `list_cmd` (string): command to list all tests in the framework.
+- `run_cmd` (string): command to run all tests in the framework.
+
+example:
+
+```json
 [
   {
     "name": "PyTest",
@@ -64,7 +83,7 @@ create a `frameworks.json` in your project directory:
     "run_cmd": "cargo test"
   }
 ]
-\```
+```
 
 - only frameworks with available executables will be used.
 - json allows adding new frameworks without touching rust code.
@@ -73,10 +92,11 @@ create a `frameworks.json` in your project directory:
 
 ## future plans
 
+- [x] make frameworks updatable without being destructive to user configs
 - [ ] add test filtering (run only tests matching a pattern or tag)
 
 ---
 
 ## license
 
-`treetest` is licensed under **mit**. see [license](license) for details.
+`treetest` is licensed under mit see [license](license) for details.
