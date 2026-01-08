@@ -1,0 +1,18 @@
+[package]
+name = "treetest"
+version = "0.1.0"
+edition = "2024"
+authors = ["mei happs <mail@meihapps.gay>"]
+description = "one cli for all the test frameworks"
+license = "MIT"
+repository = "https://github.com/meihapps/treetest"
+homepage = "https://github.com/meihapps/treetest"
+readme = "README.md"
+keywords = ["testing", "cli", "multi-framework", "automation"]
+categories = ["development-tools"]
+
+[dependencies]
+
+[[bin]]
+name = "treetest"
+path = "src/main.rs"
