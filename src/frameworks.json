@@ -1,0 +1,12 @@
+[
+  {
+    "name": "PyTest",
+    "list_cmd": "pytest --collect-only",
+    "run_cmd": "pytest"
+  },
+  {
+    "name": "Cargo",
+    "list_cmd": "cargo test -- --list",
+    "run_cmd": "cargo test"
+  }
+]
