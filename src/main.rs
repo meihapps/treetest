@@ -1,6 +1,28 @@
+use clap::{Parser, Subcommand};
 use serde::Deserialize;
 use std::fs;
 use std::process::Command;
+
+#[derive(Parser)]
+#[command(
+    author,
+    version,
+    about = "treetest: one cli for all the test frameworks",
+    override_usage = "\n\ttreetest\n\ttreetest <command>",
+    long_about = None,
+)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// run all tests in all available frameworks (default)
+    Run,
+    /// list all tests in all available frameworks without executing them
+    List,
+}
 
 #[derive(Debug, Deserialize)]
 struct Framework {
@@ -26,7 +48,8 @@ fn filter_available_frameworks(frameworks: Vec<Framework>) -> Vec<Framework> {
 }
 
 fn list_all_tests(framework: &Framework) {
-    println!("Framework: {}", framework.name);
+    println!("\x1b[1;33mListing all tests\x1b[0m");
+    println!("\x1b[1;34mFramework: {}\x1b[0m", framework.name);
 
     let output = Command::new("sh")
         .arg("-c")
@@ -38,7 +61,8 @@ fn list_all_tests(framework: &Framework) {
 }
 
 fn run_all_tests(framework: &Framework) {
-    println!("Running all tests for {}", framework.name);
+    println!("\x1b[1;33mRunning all tests\x1b[0m");
+    println!("\x1b[1;34mFramework: {}\x1b[0m", framework.name);
 
     let status = Command::new("sh")
         .arg("-c")
@@ -50,16 +74,22 @@ fn run_all_tests(framework: &Framework) {
 }
 
 fn main() {
+    let cli = Cli::parse();
     let json = fs::read_to_string("src/frameworks.json").expect("Failed to read frameworks.json");
     let frameworks: Vec<Framework> = serde_json::from_str(&json).expect("Invalid JSON format");
 
     let available_frameworks: Vec<Framework> = filter_available_frameworks(frameworks);
 
-    for framework in &available_frameworks {
-        list_all_tests(framework);
-    }
-
-    for framework in &available_frameworks {
-        run_all_tests(framework);
-    }
+    match cli.command.unwrap_or(Commands::Run) {
+        Commands::List => {
+            for framework in &available_frameworks {
+                list_all_tests(framework);
+            }
+        }
+        Commands::Run => {
+            for framework in &available_frameworks {
+                run_all_tests(framework);
+            }
+        }
+    };
 }
