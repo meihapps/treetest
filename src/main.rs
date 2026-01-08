@@ -1,7 +1,11 @@
 use clap::{Parser, Subcommand};
 use serde::Deserialize;
-use std::fs;
+use std::path::PathBuf;
 use std::process::Command;
+use std::{env, fs};
+
+const DEFAULT_JSON_URL: &str =
+    "https://raw.githubusercontent.com/meihapps/treetest/refs/heads/main/src/frameworks.json";
 
 #[derive(Parser)]
 #[command(
@@ -29,6 +33,44 @@ struct Framework {
     name: String,
     list_cmd: String,
     run_cmd: String,
+}
+
+fn get_config_path() -> PathBuf {
+    if cfg!(target_os = "windows") {
+        // Windows: %APPDATA%\treetest
+        let appdata = env::var("APPDATA").expect("%APPDATA% not set");
+        PathBuf::from(appdata).join("treetest/frameworks.json")
+    } else {
+        // Linux/macOS: ~/.config/treetest
+        let base = env::var("XDG_CONFIG_HOME")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| {
+                let home = env::var("HOME").expect("Cannot determine HOME directory");
+                PathBuf::from(home).join(".config")
+            });
+        base.join("treetest/frameworks.json")
+    }
+}
+
+fn ensure_config() -> PathBuf {
+    let config_path = get_config_path();
+    if let Some(parent) = config_path.parent() {
+        fs::create_dir_all(parent).expect("Failed to create config directory");
+    }
+
+    if !config_path.exists() {
+        println!("Downloading default config from GitHub...");
+
+        let response = reqwest::blocking::get(DEFAULT_JSON_URL)
+            .expect("Failed to download default config")
+            .text()
+            .expect("Failed to read response text");
+
+        fs::write(&config_path, response).expect("Failed to write config file");
+        println!("Created default config at {:?}", &config_path);
+    }
+
+    config_path
 }
 
 fn command_exists(cmd: &str) -> bool {
@@ -75,7 +117,9 @@ fn run_all_tests(framework: &Framework) {
 
 fn main() {
     let cli = Cli::parse();
-    let json = fs::read_to_string("src/frameworks.json").expect("Failed to read frameworks.json");
+    let config_path = ensure_config();
+    let json = fs::read_to_string(&config_path)
+        .unwrap_or_else(|_| panic!("Failed to read config at {:?}", config_path));
     let frameworks: Vec<Framework> = serde_json::from_str(&json).expect("Invalid JSON format");
 
     let available_frameworks: Vec<Framework> = filter_available_frameworks(frameworks);
