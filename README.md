@@ -103,4 +103,4 @@ example:
 
 ## license
 
-`treetest` is licensed under mit see [license](license) for details.
+`treetest` is licensed under mit see [license](LICENSE) for details.
