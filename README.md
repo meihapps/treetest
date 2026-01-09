@@ -100,6 +100,7 @@ inspired by treefmt
 ## future plans
 
 - [x] make frameworks updatable without being destructive to user configs
+- [ ] improve skipping logic
 - [ ] improve error messages
 - [ ] add test filtering (run only tests matching a pattern or tag)
 
