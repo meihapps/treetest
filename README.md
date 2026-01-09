@@ -93,6 +93,10 @@ example:
 
 ---
 
+inspired by treefmt
+
+---
+
 ## future plans
 
 - [x] make frameworks updatable without being destructive to user configs
